@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Xml;
 
 namespace Tasking
 {
@@ -60,11 +61,46 @@ namespace Tasking
             }
             else
             {
-                await _oneNoteService.AppendEntryToPageWithTimestamp(_journalPage, text);
+                await _oneNoteService.AppendNoteToPageWithTimestamp(_journalPage, text);
             }
             textBox2.Enabled = true;
             button4.Enabled = true;
             textBox2.Text = "";
+        }
+
+        private async void button5_Click(object sender, EventArgs e)
+        {
+            var tasksContent = await _oneNoteService.GetPageContent(_tasksPage);
+            var dom = new System.Xml.XmlDocument();
+            dom.LoadXml(tasksContent);
+            var finishedTasks = dom.SelectNodes("//p[@data-tag=\"to-do:completed\"]");
+            if (finishedTasks != null)
+            {
+                foreach (var finishedTask in finishedTasks)
+                {
+                    if (finishedTask is XmlNode node)
+                    {
+                        var id = node.Attributes["id"].Value;
+                        await _oneNoteService.RemoveTaskFromPage(_tasksPage, id);
+                        await _oneNoteService.AppendContentToPageWithTimestamp(_journalPage, node.OuterXml);
+
+                    }
+                }
+            }
+        }
+
+        private void trayIcon_Click(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                WindowState = FormWindowState.Normal;
+                //Show();
+            }
+            else
+            {
+                WindowState = FormWindowState.Minimized;
+                //Hide();
+            }
         }
     }
 }

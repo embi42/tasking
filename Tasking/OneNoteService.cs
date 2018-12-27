@@ -52,11 +52,21 @@ namespace Tasking
             return response;
         }
 
-        public async Task<string> AppendEntryToPageWithTimestamp(Page page, string text)
+        public async Task<string> RemoveTaskFromPage(Page page, string id)
         {
-            var date = DateTime.Now.Date.ToLongDateString();
-            var content = $"<p style=\"margin-top:0pt; margin-bottom:0pt\"><span style=\"font-family:Consolas; font-size:10.5pt; color: black; font-weight:bold\"># {date}</span></p>" +
-                $"<p style=\"margin-top:0pt;margin-bottom:0pt\"><span style=\"font-family:Consolas;font-size:10.5pt;color:black\">{text}</span></p>";
+            var change = new Change
+            {
+                target = id,
+                action = "replace",
+                content = "<!-- removed completed task --/>"
+            };
+            var response = await _graphApiService.PatchWithToken(page.ContentUrl, Serialize(new[] { change }));
+            return response;
+        }
+
+        public async Task<string> AppendContentToPageWithTimestamp(Page page, string text)
+        {
+            var content = GenerateTimestampHeader() + text;
             var change = new Change
             {
                 target = "body",
@@ -65,6 +75,19 @@ namespace Tasking
             };
             var response = await _graphApiService.PatchWithToken(page.ContentUrl, Serialize(new[] { change }));
             return response;
+        }
+
+        public async Task<string> AppendNoteToPageWithTimestamp(Page page, string text)
+        {
+            var content = $"<p style=\"margin-top:0pt;margin-bottom:0pt\"><span style=\"font-family:Consolas;font-size:10.5pt;color:black\">{text}</span></p><br/>";
+            return await AppendContentToPageWithTimestamp(page, content);
+        }
+
+        private string GenerateTimestampHeader()
+        {
+            var date = DateTime.Now.Date.ToLongDateString();
+            return
+                $"<p style=\"margin-top:4pt; margin-bottom:0pt\"><span style=\"font-family:Consolas; font-size:10.5pt; color: black; font-weight:bold\"># {date}</span></p>";
         }
 
         private T Deserialize<T>(string content)
