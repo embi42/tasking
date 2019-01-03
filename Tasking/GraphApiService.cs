@@ -8,7 +8,7 @@ namespace Tasking
 {
     public class GraphApiService
     {
-        private const string ClientId = "4c26d2d2-da1f-4dcd-a292-e235b7a73989";
+        private const string ClientId = "";
         private readonly string[] _scopes = { "user.read", "notes.read", "notes.readwrite" };
         private readonly PublicClientApplication _publicClientApp;
         private AuthenticationResult _authResult;

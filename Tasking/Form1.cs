@@ -11,6 +11,7 @@ namespace Tasking
         private readonly OneNoteService _oneNoteService;
         private Page _tasksPage;
         private Page _journalPage;
+        private readonly Hotkey _hk;
 
         public Form1()
         {
@@ -21,6 +22,27 @@ namespace Tasking
             button2.Hide();
             button4.Enabled = false;
             textBox2.Enabled = false;
+
+            _hk = new Hotkey
+            {
+                KeyCode = Keys.J,
+                Control = true,
+                Alt = true
+            };
+            _hk.Pressed += _hk_Pressed;
+
+            if (_hk.GetCanRegister(this))
+            {
+                _hk.Register(this);
+            }
+        }
+
+        private void _hk_Pressed(object sender, System.ComponentModel.HandledEventArgs e)
+        {
+            WindowState = FormWindowState.Normal;
+            BringToFront();
+            textBox2.Focus();
+            Activate();
         }
 
         private async void button1_Click(object sender, EventArgs e)
@@ -43,12 +65,6 @@ namespace Tasking
             Close();
         }
 
-        private async void button3_Click(object sender, EventArgs e)
-        {
-            var content = await _oneNoteService.GetPageContent(_journalPage);
-            textBox1.Text = content;
-        }
-
         private async void button4_Click(object sender, EventArgs e)
         {
             textBox2.Enabled = false;
@@ -66,12 +82,13 @@ namespace Tasking
             textBox2.Enabled = true;
             button4.Enabled = true;
             textBox2.Text = "";
+            WindowState = FormWindowState.Minimized;
         }
 
         private async void button5_Click(object sender, EventArgs e)
         {
             var tasksContent = await _oneNoteService.GetPageContent(_tasksPage);
-            var dom = new System.Xml.XmlDocument();
+            var dom = new XmlDocument();
             dom.LoadXml(tasksContent);
             var finishedTasks = dom.SelectNodes("//p[@data-tag=\"to-do:completed\"]");
             if (finishedTasks != null)
@@ -94,12 +111,26 @@ namespace Tasking
             if (WindowState == FormWindowState.Minimized)
             {
                 WindowState = FormWindowState.Normal;
-                //Show();
             }
             else
             {
                 WindowState = FormWindowState.Minimized;
-                //Hide();
+            }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_hk.Registered)
+            {
+                _hk.Unregister();
+            }
+        }
+
+        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Return)
+            {
+                button4_Click(sender, new EventArgs());
             }
         }
     }
